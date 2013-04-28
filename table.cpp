@@ -7,22 +7,25 @@ Table::Table(QString table, Datum *value, Database *parent) :
 	QObject((QObject*)parent)
 {
 	_tableName = table;
-	_defaultValue = value;
-	//_db = parent->
+	_exampleDatum = value;
+	_database = parent;
+	//TODO: setup _db
 
 	Q_ASSERT(isValid());
 }
 
 Table::~Table(){
-
+	//TODO:
+	//	-Close _db
+	//	-Free _defaultValue
 }
 
-bool Table::isValid() const {
+bool Table::isValid() {
 
 	bool success = _database->tableExists(_tableName);
 
 	//Get datum field lists
-	QMap<QString,QString> datumFields = _defaultValue->getFieldTypeMap();
+	QMap<QString,QString> datumFields = _exampleDatum->getFieldTypeMap();
 
 	//Get table fields
 	QMap<QString,QString> tableColumns = getColumnTypeMap();
@@ -49,15 +52,57 @@ bool Table::isValid() const {
 		return false;
 	}
 
-	//TODO: Validate field types
-	//Simplify type names
-	//Map against datum fields
 
+	//Retrieve field types
+	QMap<QString,QString> columnTypeMap = getColumnTypeMap();
+	QMap<QString,QString> datumTypeMap = _exampleDatum->getFieldTypeMap();
+
+	//TODO: Simplify type names
+
+	//Validate types
+	QMap<QString,QString> typeMap = columnTypeMap.unite(datumTypeMap);
+	QList<QString> fieldNames = typeMap.uniqueKeys();
+
+
+	//Verify we have two entries per fieldName
+	for(int i=0; i<fieldNames.length(); i++){
+		QString name = fieldNames[i];
+
+		//Field present in database table?
+		if(!columnTypeMap.contains(name)){
+			DEBUG_MSG() << "Field[" << name << "] not present in existing table["
+					  << _tableName << "]";
+
+			success = false;
+			break;
+		}
+
+		if(!datumTypeMap.contains(name)){
+			DEBUG_MSG() << "Field[" << name << "] not present in supplied datum["
+					  << _exampleDatum->getTypeName() << "]";
+			success = false;
+			break;
+		}
+
+		QList<QString> typeList = typeMap.values(name);
+
+		if(typeList.length() != 2){
+			DEBUG_MSG() << "Expected exactly 2 items but recieved " << typeList.length();
+			success = false;
+			break;
+		}
+
+		if(typeList.at(0) != typeList.at(1)){
+			DEBUG_MSG() << "Type names do not match(" << typeList.at(2) << ", " << typeList.at(1);
+			success = false;
+			break;
+		}
+	}
 
 	return success;
 }
 
-QMap<QString,QString> Table::getColumnTypeMap() const {
+QMap<QString,QString> Table::getColumnTypeMap()  {
 	QMap<QString, QString> nameTypeMap;
 
 	QString queryString = "PRAGMA table_info(locations)";
@@ -69,14 +114,18 @@ QMap<QString,QString> Table::getColumnTypeMap() const {
 		while(query.next()){
 			QSqlRecord record = query.record();
 
-			QString fieldName = record.value("name");
-			QString fieldType = record.value("type");
+			QString fieldName = record.value("name").toString();
+			QString fieldType = record.value("type").toString();
 
 			nameTypeMap.insert(fieldName, fieldType);
 		}
 	}
 
 	return nameTypeMap;
+}
+
+bool Table::doQuery(QSqlQuery& query, QString queryString){
+	return false;
 }
 
 QList<Datum*> Table::selectData(QList<Filter> filters, QString fieldList){
@@ -88,7 +137,7 @@ QList<Datum*> Table::selectData(QList<Filter> filters, QList<int> requestedField
 }
 
 QString Table::getTableName() const {
-
+	return _tableName;
 }
 
 

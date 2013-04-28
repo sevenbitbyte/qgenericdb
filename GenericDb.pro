@@ -17,7 +17,8 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     database.cpp \
-    table.cpp
+    table.cpp \
+    datum.cpp
 
 HEADERS += \
     database.h \

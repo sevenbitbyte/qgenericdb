@@ -95,7 +95,7 @@ class Table : public QObject{
 		 * @return	Returns true if the table is found and has the expected
 		 *			fields.
 		 */
-		bool isValid() const;
+		bool isValid();
 
 
 		struct Filter{
@@ -111,7 +111,7 @@ class Table : public QObject{
 		QList<Datum*> selectData( QList<Filter> filters=QList<Filter>(), QList<int> requestedFields=QList<int>() );
 
 		QString getTableName() const;
-		QMap<QString,QString> getColumnTypeMap() const ;
+		QMap<QString,QString> getColumnTypeMap();
 
 	signals:
 		void selectedData(QList<Datum*> data);
@@ -128,7 +128,7 @@ class Table : public QObject{
 		QList<Filter> _filters;
 		QSqlDatabase _db;
 		Database* _database;
-		Datum* _defaultValue;
+		Datum* _exampleDatum;
 };
 
 #endif // DATABASE_H
