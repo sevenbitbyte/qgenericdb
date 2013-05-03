@@ -13,7 +13,7 @@ class Datum{
 		 * @brief	Returns a mapping of indexes to field names
 		 * @return
 		 */
-		QMap<QString,QString> getFieldTypeMap() const;
+        QMap<QString,QString> getFieldTypeMap() const;
 		qint32 getFieldCount() const;
 
 		//void loadValues(QList<QVariant&> valueMap);
@@ -23,6 +23,7 @@ class Datum{
 
 		virtual QString getTypeName() const;
 		virtual QString getFieldName(int index) const;
+        virtual QString getFieldType(int index) const;
 		virtual QVariant* getValue(int index) const;
 		virtual void setValue(int index, QVariant& value);
 
@@ -99,7 +100,7 @@ class Table : public QObject{
 
 
 		struct Filter{
-			enum ComparisonType{ Equal_To, Not_Equal, Greater_Than, Less_Than, Greater_Than_Eq, Less_Than_Eq};
+            enum ComparisonType{ Nop=0, Equal_To, Not_Equal, Greater_Than, Less_Than, Greater_Than_Eq, Less_Than_Eq};
 
 			ComparisonType startCompare;
 			ComparisonType endCompare;
