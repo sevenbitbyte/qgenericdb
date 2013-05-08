@@ -18,8 +18,10 @@ TEMPLATE = app
 SOURCES += main.cpp \
     database.cpp \
     table.cpp \
-    datum.cpp
+    datum.cpp \
+    locationdatum.cpp
 
 HEADERS += \
     database.h \
-    debug.h
+    debug.h \
+    locationdatum.h

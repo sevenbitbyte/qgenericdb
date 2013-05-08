@@ -25,10 +25,10 @@ bool Table::isValid() {
 	bool success = _database->tableExists(_tableName);
 
 	//Get datum field lists
-	QMap<QString,QString> datumFields = _exampleDatum->getFieldTypeMap();
+    QMap<QString,QVariant::Type> datumFields = _exampleDatum->getFieldTypeMap();
 
 	//Get table fields
-	QMap<QString,QString> tableColumns = getColumnTypeMap();
+    QMap<QString,QVariant::Type> tableColumns = getColumnTypeMap();
 
 
 	//Locate different field names
@@ -103,9 +103,9 @@ bool Table::isValid() {
 }
 
 QMap<QString,QString> Table::getColumnTypeMap()  {
-	QMap<QString, QString> nameTypeMap;
+    QMap<QString, QVariant::Type> nameTypeMap;
 
-	QString queryString = "PRAGMA table_info(locations)";
+    QString queryString = QString("PRAGMA table_info(%1)").arg(getTableName());
 	QSqlQuery query(_db);
 
 	if(doQuery(query, queryString)){
@@ -115,9 +115,21 @@ QMap<QString,QString> Table::getColumnTypeMap()  {
 			QSqlRecord record = query.record();
 
 			QString fieldName = record.value("name").toString();
-			QString fieldType = record.value("type").toString();
+            QString fieldType = record.value("type").toString().toLower();
 
-			nameTypeMap.insert(fieldName, fieldType);
+            QVariant::Type variantType = QVariant::Invalid;
+
+            if(fieldType.contains("int")){
+                variantType = QVariant::LongLong;
+            }
+            else if(fieldType.contains("real")){
+                variantType = QVariant::Double;
+            }
+            else{
+                qCritical() << QString("Failed to determine proper type label for field [%1,%2]").arg(fieldName).arg(fieldType);
+            }
+
+            nameTypeMap.insert(fieldName, variantType);
 		}
 	}
 
