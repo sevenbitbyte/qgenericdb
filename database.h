@@ -36,6 +36,7 @@ class Datum{
          * @param value
          */
         void setValue(int index, QVariant& value);
+	void setValue(int index, QVariant* value);
         QVariant* getValue(int index) const;
 
 

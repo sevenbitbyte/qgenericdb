@@ -10,7 +10,7 @@ class LocationDatum : public Datum
 
         virtual QString getTypeName() const;
         virtual QString getFieldName(int index) const;
-        virtual QString getFieldType(int index) const;
+        virtual QVariant::Type getFieldType(int index) const;
 
 
         enum FieldPos{  Id_Pos=0,

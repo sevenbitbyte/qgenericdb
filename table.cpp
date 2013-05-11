@@ -54,13 +54,13 @@ bool Table::isValid() {
 
 
 	//Retrieve field types
-	QMap<QString,QString> columnTypeMap = getColumnTypeMap();
-	QMap<QString,QString> datumTypeMap = _exampleDatum->getFieldTypeMap();
+	QMap<QString,QVariant::Type> columnTypeMap = getColumnTypeMap();
+	QMap<QString,QVariant::Type> datumTypeMap = _exampleDatum->getFieldTypeMap();
 
 	//TODO: Simplify type names
 
 	//Validate types
-	QMap<QString,QString> typeMap = columnTypeMap.unite(datumTypeMap);
+	QMap<QString,QVariant::Type> typeMap = columnTypeMap.unite(datumTypeMap);
 	QList<QString> fieldNames = typeMap.uniqueKeys();
 
 
@@ -84,7 +84,7 @@ bool Table::isValid() {
 			break;
 		}
 
-		QList<QString> typeList = typeMap.values(name);
+		QList<QVariant::Type> typeList = typeMap.values(name);
 
 		if(typeList.length() != 2){
 			DEBUG_MSG() << "Expected exactly 2 items but recieved " << typeList.length();
@@ -102,7 +102,7 @@ bool Table::isValid() {
 	return success;
 }
 
-QMap<QString,QString> Table::getColumnTypeMap()  {
+QMap<QString,QVariant::Type> Table::getColumnTypeMap()  {
     QMap<QString, QVariant::Type> nameTypeMap;
 
     QString queryString = QString("PRAGMA table_info(%1)").arg(getTableName());

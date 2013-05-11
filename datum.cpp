@@ -8,7 +8,7 @@ Datum::Datum(QList<QVariant> defaultValues){
 }
 
 
-QMap<QString,QVariant::Type> Datum::getFieldTypeMap(){
+QMap<QString,QVariant::Type> Datum::getFieldTypeMap() const {
     QMap<QString, QVariant::Type> fieldMap;
     QList<QString> fieldNames = getFieldNames();
 
@@ -43,11 +43,17 @@ void Datum::setValue(int index, QVariant& value){
     _valueList.replace(index, new QVariant(value));
 }
 
+void Datum::setValue(int index, QVariant* value){
+	Q_ASSERT(getFieldType(index) == value.type);
+
+    _valueList.replace(index, value);
+}
+
 
 QVariant* Datum::getValue(int index) const {
     if(index > _valueList.size()-1 || index < 0){
         Q_ASSERT(false);
-        return null;
+        return NULL;
     }
 
     return _valueList.at(index);

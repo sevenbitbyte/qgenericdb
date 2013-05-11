@@ -75,7 +75,7 @@ int LocationDatum::deviceId() const {
 void LocationDatum::setdeviceId(int id) {
     QVariant* devIdVariant = new QVariant( (qlonglong) id);
 
-    setValue(DeviceId_Pos, devIdVariant);
+    setValue( (int) DeviceId_Pos, devIdVariant);
 }
 
 QDateTime LocationDatum::time() const {
@@ -87,7 +87,7 @@ QDateTime LocationDatum::time() const {
 void LocationDatum::setTime(const QDateTime& time){
     QVariant* timeVariant = new QVariant( (qlonglong) time.toMSecsSinceEpoch() );
 
-    setValue(Timestamp_Pos, timeVariant);
+    Datum::setValue( (int) Timestamp_Pos, timeVariant);
 }
 
 LocationDatum::TrackSource LocationDatum::source() const {
@@ -101,7 +101,7 @@ LocationDatum::TrackSource LocationDatum::source() const {
 void LocationDatum::setSource(TrackSource source){
     QVariant* sourceVariant = new QVariant( (qlonglong) source);
 
-    setValue(DeviceId_Pos, sourceVariant);
+    setValue( (int) DeviceId_Pos, sourceVariant);
 }
 
 double LocationDatum::latitude() const {
@@ -113,7 +113,7 @@ double LocationDatum::latitude() const {
 void LocationDatum::setLatitude(double value){
     QVariant* latVariant = new QVariant( value );
 
-    setValue(Latitude_Pos, latVariant);
+    setValue( (int) Latitude_Pos, latVariant);
 }
 
 double LocationDatum::longitude() const{
@@ -125,7 +125,7 @@ double LocationDatum::longitude() const{
 void LocationDatum::setLongitude(double value) {
     QVariant* latVariant = new QVariant( value );
 
-    setValue(Latitude_Pos, latVariant);
+    setValue( (int) Latitude_Pos, latVariant);
 }
 
 double LocationDatum::hdop() const{
@@ -137,7 +137,7 @@ double LocationDatum::hdop() const{
 void LocationDatum::setHdop(double hdop){
     QVariant* hdopVariant = new QVariant( hdop );
 
-    setValue(Hdop_Pos, hdopVariant);
+    setValue( (int) Hdop_Pos, hdopVariant);
 }
 
 double LocationDatum::elevation() const {
@@ -149,7 +149,7 @@ double LocationDatum::elevation() const {
 void LocationDatum::setElevation(double elevation){
     QVariant* elevVariant = new QVariant( elevation );
 
-    setValue(Elevation_Pos, elevVariant);
+    setValue( (int) Elevation_Pos, elevVariant);
 }
 
 double LocationDatum::course() const {
@@ -161,7 +161,7 @@ double LocationDatum::course() const {
 void LocationDatum::setCourse(double course){
     QVariant* courseVariant = new QVariant( course );
 
-    setValue(Course_Pos, courseVariant);
+    setValue( (int) Course_Pos, courseVariant);
 }
 
 double LocationDatum::speed() const{
@@ -173,7 +173,7 @@ double LocationDatum::speed() const{
 void LocationDatum::setSpeed(double speed){
     QVariant* speedVariant = new QVariant( speed );
 
-    setValue(Speeed_Pos, speedVariant);
+    setValue( (int) Speed_Pos, speedVariant);
 }
 
 int LocationDatum::satelites() const{
@@ -185,6 +185,6 @@ int LocationDatum::satelites() const{
 void LocationDatum::setSatelites(int satelites){
     QVariant* satVariant = new QVariant( (qlonglong) satelites );
 
-    setValue(Satelites_Pos, satVariant);
+    setValue( (int) Satelites_Pos, satVariant);
 }
 
