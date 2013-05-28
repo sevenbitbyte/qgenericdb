@@ -81,7 +81,7 @@ void LocationDatum::setdeviceId(int id) {
 QDateTime LocationDatum::time() const {
     QVariant* timeVariant = getValue(Timestamp_Pos);
 
-    QDateTime::fromMSecsSinceEpoch(timeVariant->toLongLong());
+    return QDateTime::fromMSecsSinceEpoch(timeVariant->toLongLong());
 }
 
 void LocationDatum::setTime(const QDateTime& time){

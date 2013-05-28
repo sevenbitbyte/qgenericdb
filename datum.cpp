@@ -8,6 +8,17 @@ Datum::Datum(QList<QVariant> defaultValues){
 }
 
 
+Datum::Datum(QMap<QString, QVariant> initialValues){
+    QList<QString> fieldNames = getFieldNames();
+
+    QMap<QString,QVariant>::iterator iter;
+    for(iter = initialValues.begin(); iter != initialValues.end(); iter++){
+        int idx = fieldNames.indexOf( iter.key() );
+
+        setValue(idx, iter.value());
+    }
+}
+
 QMap<QString,QVariant::Type> Datum::getFieldTypeMap() const {
     QMap<QString, QVariant::Type> fieldMap;
     QList<QString> fieldNames = getFieldNames();
@@ -44,7 +55,7 @@ void Datum::setValue(int index, QVariant& value){
 }
 
 void Datum::setValue(int index, QVariant* value){
-	Q_ASSERT(getFieldType(index) == value.type);
+    Q_ASSERT(getFieldType(index) == value.type);
 
     _valueList.replace(index, value);
 }
@@ -59,8 +70,10 @@ QVariant* Datum::getValue(int index) const {
     return _valueList.at(index);
 }
 
-qlonglong Datum::id(){
-    QVariant* idVariant = getValue(0);
+qlonglong Datum::id() const {
+   return _rowId;
+}
 
-    return idVariant->toLongLong();
+void Datum::setId(qlonglong value){
+    _rowId = value;
 }
