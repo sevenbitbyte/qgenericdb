@@ -38,8 +38,27 @@ class Datum{
          */
         void setValue(int index, QVariant& value);
         void setValue(int index, QVariant* value);
-        QVariant* getValue(int index) const;
 
+        /**
+         * @brief   Returns a pointer to the underlaying variant for the
+         *          at the specified index.
+         * @param   index
+         * @return  Returns a point to the underylaying variant, this can be NULL.
+         */
+        QVariant* getValue(int index) const;
+        bool isSet(int index) const;
+
+        /**
+         * @brief   Sets variant pointer to NULL to indicate that no value
+         *          is set. Operationally equivalent calling setValue(index, NULL).
+         * @param index
+         */
+        void unsetValue(int index);
+
+        /**
+         * @brief   Unsets all field values
+         */
+        void unsetValues();
 
         virtual QString getTypeName() const = 0;
         virtual QString getFieldName(int index) const = 0;
@@ -134,7 +153,12 @@ class Table : public QObject{
             Datum* end;
         };
 
+        template<typename DatumType> QList<Datum*> selectData(QString query);
+
+
         QList<Datum*> selectData( QList<Filter> filters=QList<Filter>(), QString fieldList=QString("*") );
+
+
         QList<Datum*> selectData( QList<Filter> filters=QList<Filter>(), QList<int> requestedFields=QList<int>() );
 
         QString getTableName() const;
@@ -145,7 +169,7 @@ class Table : public QObject{
 
     public slots:
         void insertData(QList<Datum*> data, QList<int> fields=QList<int>());
-        void updateData(QList<Datum*> data, QList<int> fields=QList<int>());
+        void updateData(QList<Datum*> data, QList<int> fields=QList<int>(), QList<int> matchOn=QList<int>());
 
     protected:
         bool doQuery(QSqlQuery& query, QString queryString);

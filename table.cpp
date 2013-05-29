@@ -137,15 +137,53 @@ QMap<QString,QVariant::Type> Table::getColumnTypeMap()  {
 }
 
 bool Table::doQuery(QSqlQuery& query, QString queryString){
-	return false;
+    bool success = query.exec(queryString);
+
+    if(!success){
+        qWarning() << "SqlQuery failed[type = " << query.lastError().type() << " text=" << query.lastError().text() << "] Offending string[" << queryString << "]";
+        //_dbError = query.lastError();
+    }
+    Q_ASSERT_X(success, "sql query error", qPrintable(query.lastError().text()));
+
+    return success;
+}
+
+template<typename DatumType>  QList<Datum*> Table::selectData(QString queryStr){
+    QList<Datum*> resultList;
+    QSqlQuery query(_db);
+
+
+
+    if( doQuery(query, queryStr) ){
+        while( query.next() ){
+            QSqlRecord record = query.record();
+
+            Datum* datum = new DatumType();
+
+            //Copy field values
+            for(int i=0; i<datum->getFieldCount(); i++){
+                int fieldIdx = datum->getFieldName(i);
+
+                datum->setValue(i, record.value(fieldIdx));
+            }
+
+            //Get rowId field's index
+            int rowIdIdx = record.indexOf("rowid");
+            Q_ASSERT(rowIdIdx > -1);
+            //Set datum rowId
+            datum->setId(record.value(rowIdIdx).LongLong());
+        }
+    }
+
+    return resultList;
 }
 
 QList<Datum*> Table::selectData(QList<Filter> filters, QString fieldList){
-	//
+    //TODO: Implement
 }
 
 QList<Datum*> Table::selectData(QList<Filter> filters, QList<int> requestedFields){
-	//
+    //TODO: Implement
 }
 
 QString Table::getTableName() const {
@@ -154,9 +192,42 @@ QString Table::getTableName() const {
 
 
 void Table::insertData(QList<Datum*> data, QList<int> fields){
+    //TODO: Implement
+    QSqlQuery query(_db);
+    QString queryString;
+    QTextStream stringStream(&queryString);
 
+    stringStream << "INSERT INTO " << _tableName << " VALUES (";
+
+    for(int i=0; i<data.size(); i++){
+        stringStream << "?";
+        if(i < data.size() - 1){
+            stringStream << ", ";
+        }
+    }
+
+    stringStream << ")";
+    query.prepare(queryString);
+
+    //Construct bind lists
+    QVariantList valueLists;
+
+    for(int i=0; i<fields.size(); i++){
+        //valueLists.push_back();
+        QVariantList values;
+
+        for(int j=0; j<data.size(); j++){
+            values.push_back( *data[j]->getValue(fields[i]) );
+        }
+
+        query.addBindValue(values);
+    }
+
+    bool success = query.execBatch();
+
+    Q_ASSERT(success);
 }
 
-void Table::updateData(QList<Datum*> data, QList<int> fields){
-
+void Table::updateData(QList<Datum*> data, QList<int> fields, QList<int> matchOn){
+    //TODO: Implement
 }

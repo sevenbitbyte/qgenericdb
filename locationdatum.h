@@ -7,6 +7,7 @@ class LocationDatum : public Datum
 {
     public:
         LocationDatum();
+        //LocationDatum(Datum* parent);
 
         virtual QString getTypeName() const;
         virtual QString getFieldName(int index) const;
@@ -56,6 +57,9 @@ class LocationDatum : public Datum
 
         int satelites() const;
         void setSatelites(int satelites);
+
+    private:
+        Datum* _datum;
 };
 
 #endif // LOCATIONDATUM_H
