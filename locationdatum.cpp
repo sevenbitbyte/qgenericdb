@@ -14,27 +14,27 @@ QString LocationDatum::getTypeName() const {
 
 QString LocationDatum::getFieldName(int index) const {
     switch(index){
-        case 0:
+        case Id_Pos:
             return QString("id");
-        case 1:
+        case DeviceId_Pos:
             return QString("device_id");
-        case 2:
+        case Timestamp_Pos:
             return QString("timestamp");
-        case 3:
+        case Source_Pos:
             return QString("source");
-        case 4:
+        case Latitude_Pos:
             return QString("ll_lat");
-        case 5:
+        case Longitude_Pos:
             return QString("ll_long");
-        case 6:
+        case Hdop_Pos:
             return QString("hdop");
-        case 7:
+        case Elevation_Pos:
             return QString("elev");
-        case 8:
+        case Course_Pos:
             return QString("course");
-        case 9:
+        case Speed_Pos:
             return QString("speed");
-        case 10:
+        case Satelites_Pos:
             return QString("sats");
         default:
             break;
@@ -46,18 +46,18 @@ QString LocationDatum::getFieldName(int index) const {
 
 QVariant::Type LocationDatum::getFieldType(int index) const {
     switch(index){
-        case 0:     //id
-        case 1:     //device_id
-        case 2:     //timestamp
-        case 3:     //source
-        case 10:    //sats
+        case Id_Pos:
+        case DeviceId_Pos:
+        case Timestamp_Pos:
+        case Source_Pos:
+        case Satelites_Pos:
             return QVariant::LongLong;
-        case 4:     //ll_lat
-        case 5:     //ll_long
-        case 6:     //hdop
-        case 7:     //elev
-        case 8:     //course
-        case 9:     //speed
+        case Latitude_Pos:
+        case Longitude_Pos:
+        case Hdop_Pos:
+        case Elevation_Pos:
+        case Course_Pos:
+        case Speed_Pos:
             return QVariant::Double;
         default:
             break;
