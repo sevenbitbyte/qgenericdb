@@ -192,12 +192,28 @@ QString Table::getTableName() const {
 
 
 void Table::insertData(QList<Datum*> data, QList<int> fields){
-    //TODO: Implement
     QSqlQuery query(_db);
     QString queryString;
     QTextStream stringStream(&queryString);
 
-    stringStream << "INSERT INTO " << _tableName << " VALUES (";
+    stringStream << "INSERT INTO " << _tableName;
+
+    if(!fields.isEmpty()){
+         stringStream << "(";
+
+        //Build list of affected columns
+        for(int i=0; i<fields.size(); i++){
+            stringStream << _exampleDatum->getFieldName(i);
+
+            if(i < fields.size() - 1){
+                stringStream << ", ";
+            }
+        }
+
+        stringStream << ")";
+    }
+
+    stringStream << " VALUES (";
 
     for(int i=0; i<data.size(); i++){
         stringStream << "?";
@@ -210,10 +226,7 @@ void Table::insertData(QList<Datum*> data, QList<int> fields){
     query.prepare(queryString);
 
     //Construct bind lists
-    QVariantList valueLists;
-
     for(int i=0; i<fields.size(); i++){
-        //valueLists.push_back();
         QVariantList values;
 
         for(int j=0; j<data.size(); j++){
@@ -230,4 +243,85 @@ void Table::insertData(QList<Datum*> data, QList<int> fields){
 
 void Table::updateData(QList<Datum*> data, QList<int> fields, QList<int> matchOn){
     //TODO: Implement
+
+    QSqlQuery query(_db);
+    QString queryString;
+    QTextStream stringStream(&queryString);
+
+    //UPDATE TEST_TABLE SET COL1 = ?, COL2 = ? WHERE ID = ?
+
+    stringStream << "UPDATE " << _tableName << " SET ";
+
+    if(fields.empty()){
+        //Build list of all datum field indexes
+        for(int i=0; i<_exampleDatum->getFieldCount(); i++){
+            fields.push_back(i);
+        }
+    }
+
+    //Construct SET field list fragment
+    for(int i=0; i<fields.size(); i++){
+        stringStream << _exampleDatum->getFieldName( fields[i] ) << " = ?";
+
+        if(i < fields.size() - 1){
+            stringStream << ", ";
+        }
+    }
+
+    stringStream << " WHERE ";
+    if(matchOn.isEmpty()){
+        //Match on rowId
+        stringStream << "rowid = ?";
+    }
+    else{
+        //Construct WHERE fragment
+        for(int i=0; i<matchOn.size(); i++){
+            stringStream << _exampleDatum->getFieldName( matchOn[i] ) << " = ?";
+
+            if(i < matchOn.size() - 1){
+                stringStream << " AND ";
+            }
+        }
+    }
+
+    stringStream << ")";
+    query.prepare(queryString);
+
+    //Bind values to set
+    for(int i=0; i<fields.size(); i++){
+        QVariantList values;
+
+        for(int j=0; j<data.size(); j++){
+            values.push_back( *data[j]->getValue(fields[i]) );
+        }
+
+        query.addBindValue(values);
+    }
+
+    //Bind match values
+    if(matchOn.isEmpty()){
+        //Bind on rowids
+        QVariantList values;
+
+        for(int j=0; j<data.size(); j++){
+            values.push_back( data[j]->id() );
+        }
+
+        query.addBindValue(values);
+    }
+    else{
+        for(int i=0; i<matchOn.size(); i++){
+            QVariantList values;
+
+            for(int j=0; j<data.size(); j++){
+                values.push_back( *data[j]->getValue(matchOn[i]) );
+            }
+
+            query.addBindValue(values);
+        }
+    }
+
+    bool success = query.execBatch();
+
+    Q_ASSERT(success);
 }
