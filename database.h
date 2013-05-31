@@ -27,7 +27,6 @@ class Datum{
         QMap<QString,QVariant::Type> getFieldTypeMap() const;
         qint32 getFieldCount() const;
 
-        //void loadValues(QList<QVariant&> valueMap);
         QList<QVariant*> getValues() const;
         QList<QString> getFieldNames() const;
 
@@ -46,6 +45,7 @@ class Datum{
          * @return  Returns a point to the underylaying variant, this can be NULL.
          */
         QVariant* getValue(int index) const;
+
         bool isSet(int index) const;
 
         /**
@@ -71,9 +71,6 @@ class Datum{
         qlonglong id() const;
         void setId(qlonglong value);
 
-    //protected:
-        //void initializeField(QVariant* value, int pos);
-
     private:
         qlonglong _rowId;
         QList<QVariant*> _valueList;
@@ -94,26 +91,46 @@ class Database : public QObject{
         /**
          * @brief	Constructs a Table object if none exists already for the
          *			requested table. If the table does not exist in the database
-         *			it will be initialized with all fields from the supplied
-         *			example Datum. If a field named "id" exists it will be made
-         *			the primary key. If the table already exists its fields will
-         *			be compared against those found in the example Datum. Any
-         *			missing fields will result in returning NULL and emitting an
-         *			appropriate TableError.
+         *			it will be created, see Database::createTable() for details.
+         *          If the table already exists its fields will be compared
+         *          against those found in the example Datum. Any missing fields
+         *          will result in returning NULL.
+         *
          * @param   dataExample     An example of data stored in the requested table
-         * @param   tableName		Name of the table to return a pointer to
+         * @param   tableName		Name of the table to return a pointer to, if
+         *                          empty string dataExample.getTypeName() will
+         *                          be used instead.
          * @return	A pointer to the requested Table or NULL if an error was
          *			encountered.
          */
         Table* getTable(Datum* dataExample, QString tableName=QString());
+
+        /**
+         * @brief   If the table does not exist in the database it will be
+         *          initialized with all fields from the supplied example Datum.
+         *          The first field will be made the primary key. If the type of
+         *          the first field is an INTEGER the primary key will be made
+         *          auto-incrementing.
+         *
+         * @param   dataExample Field names and types will be used to create
+         *                      table columns. Type name will be used as table
+         *                      name unless overriden by supplying tableName.
+         * @param   tableName   Used to name the created table, defaults to
+         *                      empty string in which case dataExample.getTypeName()
+         *                      will be used instead.
+         * @return  Returns true if table could be created, false on errors
+         */
         bool createTable(Datum* dataExample, QString tableName=QString());
 
-        enum TableError {None=0x0, Extra_Table_Fields=1, Missing_Datum_Fields=2};
 
+        /**
+         * @brief   Translates a QVariant::Type into a string suitable for use
+         *          in an Sqlite database.
+         * @param   variantType
+         */
         static QString variantToSqlType(QVariant::Type variantType);
 
     signals:
-        void tableError(QString tableName, TableError errorCode);
         void databaseOpened(QString dbName, QString dbPath);
 
     protected:
@@ -126,7 +143,6 @@ class Database : public QObject{
         QString _dbconnectStr;
         QString _dbTypeStr;
         QSqlError _dbError;
-        //QString _host;
         QSqlDatabase _db;
         QMap<QString, Table*> _tables;
 };

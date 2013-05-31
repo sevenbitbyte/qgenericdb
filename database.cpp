@@ -8,8 +8,7 @@ Database::Database(QString dbname, QSettings* settings, QObject *parent) :
 {
 	_dbName = dbname;
     _dbconnectStr = QString();
-	_dbTypeStr = "QSQLITE";
-    //_host = QHostInfo::localHostName();
+    _dbTypeStr = "QSQLITE";
 
 	_dbconnectStr = lookupDBPath(settings);
     qDebug() << _dbName << " using db [" << _dbconnectStr << "]";
@@ -147,29 +146,12 @@ bool Database::doQuery(QSqlQuery& query, QString queryString){
 	return success;
 }
 
-
-
-
-/**
- * @brief	Constructs a Table object if none exists already for the
- *			requested table. If the table does not exist in the database
- *			it will be initialized with all fields from the supplied
- *			example Datum. If an field named "id" exists it will be made
- *			the primary key. If the table already exists its fields will
- *			be compared against those found in the example Datum. Any
- *			missing fields will result in returning NULL and emitting an
- *			appropriate TableError.
- * @param tableName		Name of the table to return a pointer to
- * @param dataExample	An example of data stored in the requested table
- * @return	A pointer to the requested Table or NULL if an error was
- *			encountered.
- */
 Table* Database::getTable(Datum* dataExample, QString tableName){
     if(tableName.isEmpty()){
         tableName = dataExample->getTypeName();
     }
 
-	if( !_db.tables(QSql::Tables).contains(tableName) ){
+    if(!_db.tables(QSql::Tables).contains(tableName)){
         DEBUG_MSG() << "No such table[" << tableName << "] in db[" << _dbName << "]";
 		return NULL;
 	}
@@ -241,7 +223,7 @@ bool Database::createTable(Datum* dataExample, QString tableName){
             }
         }
 
-        fieldIter++
+        fieldIter++;
         if(fieldIter != fieldTypeMap.end()){
             queryStream << ",";
         }
