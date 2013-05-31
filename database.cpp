@@ -7,16 +7,16 @@ Database::Database(QString dbname, QSettings* settings, QObject *parent) :
 	QObject(parent)
 {
 	_dbName = dbname;
-	_dbconnectStr = "";
+    _dbconnectStr = QString();
 	_dbTypeStr = "QSQLITE";
-	_host = QHostInfo::localHostName();
+    //_host = QHostInfo::localHostName();
 
 	_dbconnectStr = lookupDBPath(settings);
-	qDebug() << dbname << " using db [" << _dbconnectStr << "]";
+    qDebug() << _dbName << " using db [" << _dbconnectStr << "]";
 
 	bool success = openDB();
     if(!success){
-        qCritical() << __PRETTY_FUNCTION__ << " - " << "Failure while opening duplocator database";
+        qCritical() << __PRETTY_FUNCTION__ << " - " << "Failure while opening " << _dbName << " database located at " << _dbconnectStr;
     }
 	else{
 		emit databaseOpened(_dbName, _dbconnectStr);
@@ -41,31 +41,49 @@ QString Database::lookupDBPath(QSettings* settings){
 	QString path = _dbconnectStr;
 
 	if(path.isEmpty()){
-		//QSettings settings("cumulonimbus", "nimbus-core");
 		QString pathVar = _dbName.append("DbPath");
 
+        //Check for db path in application settings
 		if(settings->contains(pathVar)){
+            //Read db path from app settings
 			QString dbPath = settings->value(pathVar).toString();
 			if(dbPath.isEmpty()){
-				qWarning() << "Empty path specified for " << _dbName << " in ["
-						   << settings->fileName()
-						   << "] dropping DB in user home";
-				path = QDir::homePath();
+                //Invalid path, default to app settings directory
+
+                //Determine location of application settings
+                QFileInfo settingsFile(settings->fileName());
+
+                //Construct db path residing in same directory as app settings
+                QString settingsDir = settingsFile.canonicalPath();
+                path = settingsDir.append(_dbName).append(".sqlite");
+
+                //Save db path to application settings
+                QString firstRunVar = pathVar.append("FirstRun");
+                settings->setValue(pathVar, QVariant::fromValue<QString>(settingsDir));
+                settings->setValue(firstRunVar, QVariant::fromValue<bool>(false));
+                settings->sync();
 			}
 			else{
 				path = dbPath;
 			}
 		}
-		else{
-			settings->setValue("firstRun", QVariant::fromValue<bool>(false));
+        else{
+            //Db path not defined in app settings
+            //Set firstrun flag to true
+            QString firstRunVar = pathVar.append("FirstRun");
+            settings->setValue(firstRunVar, QVariant::fromValue<bool>(true));
 			settings->sync();
+
+            //Determine location of application settings
 			QFileInfo settingsFile(settings->fileName());
 
+            //Construct db path residing in same directory as app settings
 			QString settingsDir = settingsFile.canonicalPath();
 			path = settingsDir.append(_dbName).append(".sqlite");
 
-			QString pathVar = _dbName.append("DbPath");
+            //Save db path to application settings
 			settings->setValue(pathVar, QVariant::fromValue<QString>(settingsDir));
+            settings->setValue(firstRunVar, QVariant::fromValue<bool>(false));
 			settings->sync();
 		}
 	}
@@ -74,17 +92,15 @@ QString Database::lookupDBPath(QSettings* settings){
 }
 
 
-/*void Database::setDBPath(QString path){
-	_dbconnectStr = path;
-}*/
-
-
 bool Database::openDB(){
 	QString databaseHandle = _dbName.append("-datastore");
+
     if(QSqlDatabase::contains(databaseHandle)){
+        //Use existing db connection
         _db = QSqlDatabase::database(databaseHandle);
     }
     else{
+        //Create new db connection
         _db = QSqlDatabase::addDatabase(_dbTypeStr, databaseHandle);
     }
 
@@ -95,8 +111,6 @@ bool Database::openDB(){
 		return false;
 	}
 
-    QStringList tables = _db.tables(QSql::Tables);
-
 	bool success = true;
 
     QString syncOff = "PRAGMA synchronous=OFF";
@@ -106,13 +120,13 @@ bool Database::openDB(){
 
 	if(!setupSuccess){
 		success = false;
-		qCritical("Filed to configure database session");
+        qCritical() << "Failed to configure database[" << _dbName << "] session";
 	}
 
 
 	QStringList tableNames = _db.tables(QSql::Tables);
 	for(int i=0; i<tableNames.count(); i++){
-		DEBUG_MSG() << "table[" << i << "] = " << tableNames[i];
+        DEBUG_MSG() << _dbName << ":table[" << i << "] = " << tableNames[i];
 	}
 
 	return success;
@@ -150,9 +164,13 @@ bool Database::doQuery(QSqlQuery& query, QString queryString){
  * @return	A pointer to the requested Table or NULL if an error was
  *			encountered.
  */
-Table* Database::getTable(QString tableName, Datum* dataExample){
+Table* Database::getTable(Datum* dataExample, QString tableName){
+    if(tableName.isEmpty()){
+        tableName = dataExample->getTypeName();
+    }
+
 	if( !_db.tables(QSql::Tables).contains(tableName) ){
-		DEBUG_MSG() << "No such table[" << tableName << "] in db[" << _dbName;
+        DEBUG_MSG() << "No such table[" << tableName << "] in db[" << _dbName << "]";
 		return NULL;
 	}
 
@@ -173,5 +191,65 @@ Table* Database::getTable(QString tableName, Datum* dataExample){
 	return NULL;
 }
 
+QString Database::variantToSqlType(QVariant::Type variantType){
+    QString typeStr = QString();
+    switch(variantType){
+        case QVariant::LongLong:
+            typeStr = "INTEGER";
+            break;
+        case QVariant::Double:
+            typeStr = "REAL";
+            break;
+        case QVariant::String:
+            typeStr = "TEXT";
+            break;
+        case QVariant::ByteArray:
+            typeStr = "BLOB";
+            break;
+        default:
+            qCritical() << "Unsupported variant[" << variantType << "] requested";
+            break;
+    }
 
+    return typeStr;
+}
+
+bool Database::createTable(Datum* dataExample, QString tableName){
+    if(tableName.isEmpty()){
+        tableName = dataExample->getTypeName();
+    }
+
+
+    QString queryStr;
+    QTextStream queryStream(&queryStr);
+
+    queryStream << "CREATE TABLE IF NOT EXISTS " << tableName << "(";
+
+    QMap<QString,QVariant::Type> fieldTypeMap = dataExample->getFieldTypeMap();
+    QMap<QString,QVariant::Type>::Iterator fieldIter = fieldTypeMap.begin();
+
+    while(fieldIter != fieldTypeMap.end()){
+
+        queryStream << fieldIter.key() << " " << Database::variantToSqlType(fieldIter.value());
+
+        if(fieldIter == fieldTypeMap.begin()){
+            //Make first field primary key
+            queryStream << "PRIMARY KEY";
+
+            if(Database::variantToSqlType(fieldIter.value()) == "INTEGER"){
+                queryStream << " AUTOINCREMENT";
+            }
+        }
+
+        fieldIter++
+        if(fieldIter != fieldTypeMap.end()){
+            queryStream << ",";
+        }
+    }
+
+    queryStream << ")";
+
+    QSqlQuery query(_db);
+    return doQuery(query, queryStr);
+}
 

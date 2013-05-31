@@ -59,7 +59,7 @@ class LocationDatum : public Datum
         void setSatelites(int satelites);
 
     private:
-        Datum* _datum;
+        //Datum* _datum;
 };
 
 #endif // LOCATIONDATUM_H

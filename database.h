@@ -100,15 +100,17 @@ class Database : public QObject{
          *			be compared against those found in the example Datum. Any
          *			missing fields will result in returning NULL and emitting an
          *			appropriate TableError.
-         * @param   tableName		Name of the table to return a pointer to
          * @param   dataExample     An example of data stored in the requested table
+         * @param   tableName		Name of the table to return a pointer to
          * @return	A pointer to the requested Table or NULL if an error was
          *			encountered.
          */
-        Table* getTable(QString tableName, Datum* dataExample);
-        bool createTable();
+        Table* getTable(Datum* dataExample, QString tableName=QString());
+        bool createTable(Datum* dataExample, QString tableName=QString());
 
         enum TableError {None=0x0, Extra_Table_Fields=1, Missing_Datum_Fields=2};
+
+        static QString variantToSqlType(QVariant::Type variantType);
 
     signals:
         void tableError(QString tableName, TableError errorCode);
@@ -124,7 +126,7 @@ class Database : public QObject{
         QString _dbconnectStr;
         QString _dbTypeStr;
         QSqlError _dbError;
-        QString _host;
+        //QString _host;
         QSqlDatabase _db;
         QMap<QString, Table*> _tables;
 };
@@ -136,7 +138,7 @@ class Table : public QObject{
         ~Table();
 
         /**
-         * @brief	Varifies that the table exists in the database and has the
+         * @brief	Verifies that the table exists in the database and has the
          *			same field names and types present in the example datum.
          * @return	Returns true if the table is found and has the expected
          *			fields.
@@ -144,22 +146,10 @@ class Table : public QObject{
         bool isValid();
 
 
-        struct Filter{
-            enum ComparisonType{ Nop=0, Equal_To, Not_Equal, Greater_Than, Less_Than, Greater_Than_Eq, Less_Than_Eq};
+        template<typename DatumType> QList<Datum*> selectDataSync(QString query);
 
-            ComparisonType startCompare;
-            ComparisonType endCompare;
-            Datum* start;
-            Datum* end;
-        };
-
-        template<typename DatumType> QList<Datum*> selectData(QString query);
-
-
-        QList<Datum*> selectData( QList<Filter> filters=QList<Filter>(), QString fieldList=QString("*") );
-
-
-        QList<Datum*> selectData( QList<Filter> filters=QList<Filter>(), QList<int> requestedFields=QList<int>() );
+        bool insertDataSync(QList<Datum*> data, QList<int> fields=QList<int>());
+        bool updateDataSync(QList<Datum*> data, QList<int> fields=QList<int>(), QList<int> matchOn=QList<int>());
 
         QString getTableName() const;
         QMap<QString,QVariant::Type> getColumnTypeMap();
@@ -168,7 +158,8 @@ class Table : public QObject{
         void selectedData(QList<Datum*> data);
 
     public slots:
-        void insertData(QList<Datum*> data, QList<int> fields=QList<int>());
+        //void selectData(QString query);
+        void insertData(QList<Datum *> data, QList<int> fields);
         void updateData(QList<Datum*> data, QList<int> fields=QList<int>(), QList<int> matchOn=QList<int>());
 
     protected:
@@ -176,7 +167,6 @@ class Table : public QObject{
 
     private:
         QString _tableName;
-        QList<Filter> _filters;
         QSqlDatabase _db;
         Database* _database;
         Datum* _exampleDatum;

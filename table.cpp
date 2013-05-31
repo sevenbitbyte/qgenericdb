@@ -148,7 +148,7 @@ bool Table::doQuery(QSqlQuery& query, QString queryString){
     return success;
 }
 
-template<typename DatumType>  QList<Datum*> Table::selectData(QString queryStr){
+template<typename DatumType>  QList<Datum*> Table::selectDataSync(QString queryStr){
     QList<Datum*> resultList;
     QSqlQuery query(_db);
 
@@ -178,20 +178,19 @@ template<typename DatumType>  QList<Datum*> Table::selectData(QString queryStr){
     return resultList;
 }
 
-QList<Datum*> Table::selectData(QList<Filter> filters, QString fieldList){
-    //TODO: Implement
-}
 
-QList<Datum*> Table::selectData(QList<Filter> filters, QList<int> requestedFields){
-    //TODO: Implement
-}
 
 QString Table::getTableName() const {
 	return _tableName;
 }
 
-
 void Table::insertData(QList<Datum*> data, QList<int> fields){
+    bool success = insertDataSync( data, fields);
+    Q_ASSERT(success);
+}
+
+
+bool Table::insertDataSync(QList<Datum*> data, QList<int> fields){
     QSqlQuery query(_db);
     QString queryString;
     QTextStream stringStream(&queryString);
@@ -236,14 +235,16 @@ void Table::insertData(QList<Datum*> data, QList<int> fields){
         query.addBindValue(values);
     }
 
-    bool success = query.execBatch();
+    return query.execBatch();
+}
+
+void Table::updateData(QList<Datum*> data, QList<int> fields, QList<int> matchOn){
+    bool success = updateDataSync(data, fields, matchOn);
 
     Q_ASSERT(success);
 }
 
-void Table::updateData(QList<Datum*> data, QList<int> fields, QList<int> matchOn){
-    //TODO: Implement
-
+bool Table::updateDataSync(QList<Datum*> data, QList<int> fields, QList<int> matchOn){
     QSqlQuery query(_db);
     QString queryString;
     QTextStream stringStream(&queryString);
@@ -321,7 +322,5 @@ void Table::updateData(QList<Datum*> data, QList<int> fields, QList<int> matchOn
         }
     }
 
-    bool success = query.execBatch();
-
-    Q_ASSERT(success);
+    return query.execBatch();
 }
