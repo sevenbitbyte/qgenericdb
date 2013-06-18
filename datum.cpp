@@ -1,7 +1,12 @@
 #include "database.h"
 
 
-Datum::Datum(QList<QVariant> defaultValues){
+Datum::Datum(){
+    //Do nothing
+    _rowId = -1;
+}
+
+/*Datum::Datum(QList<QVariant> defaultValues){
     unsetValues();
     _rowId = -1;
 
@@ -22,7 +27,7 @@ Datum::Datum(QMap<QString, QVariant> initialValues){
 
         setValue(idx, iter.value());
     }
-}
+}*/
 
 QMap<QString,QVariant::Type> Datum::getFieldTypeMap() const {
     QMap<QString, QVariant::Type> fieldMap;
@@ -36,7 +41,7 @@ QMap<QString,QVariant::Type> Datum::getFieldTypeMap() const {
 }
 
 qint32 Datum::getFieldCount() const {
-    return _valueList.count();
+    return _fieldCount;
 }
 
 QList<QVariant*> Datum::getValues() const {
@@ -46,21 +51,26 @@ QList<QVariant*> Datum::getValues() const {
 QList<QString> Datum::getFieldNames() const {
     QList<QString> fieldNameList;
 
-    for(int i=0; i < getFieldCount(); i++){
-        fieldNameList.push_back( getFieldName(i) );
+    int i = 0;
+    QString fieldName = getFieldName(i);
+
+    while( !fieldName.isEmpty() ){
+        fieldNameList.push_back( fieldName );
+
+        fieldName = getFieldName(++i);
     }
 
     return fieldNameList;
 }
 
 void Datum::setValue(int index, QVariant& value){
-    Q_ASSERT(getFieldType(index) == value.type);
+    Q_ASSERT(getFieldType(index) == value.type());
 
     setValue(index, new QVariant(value));
 }
 
 void Datum::setValue(int index, QVariant* value){
-    Q_ASSERT(getFieldType(index) == value.type);
+    Q_ASSERT(getFieldType(index) == value->type());
 
     if(_valueList.at(index) == NULL){
         _valueList.replace(index, value);
@@ -97,6 +107,8 @@ void Datum::unsetValue(int index){
 
 void Datum::unsetValues(){
     QList<QVariant::Type> types = getFieldTypeMap().values();
+
+    _fieldCount = types.size();
 
     for(int i=0; i<types.size(); i++){
         if(_valueList.size() < (i+1)){

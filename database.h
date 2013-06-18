@@ -7,17 +7,20 @@
 
 class Datum{
 	public:
+
+        Datum();
+
         /**
          * @brief Construct a Datum with default values. Expects all fields to be supplied
          * @param defaultValues
          */
-		Datum(QList<QVariant> defaultValues=QList<QVariant>());
+        //Datum(QList<QVariant> defaultValues=QList<QVariant>());
 
         /**
          * @brief Construct a Datum with the specified intial values
          * @param initialValues
          */
-        Datum(QMap<QString,QVariant> initialValues);
+        //Datum(QMap<QString,QVariant> initialValues);
 
 
 		/**
@@ -25,7 +28,6 @@ class Datum{
          * @return
          */
         QMap<QString,QVariant::Type> getFieldTypeMap() const;
-        qint32 getFieldCount() const;
 
         QList<QVariant*> getValues() const;
         QList<QString> getFieldNames() const;
@@ -61,6 +63,7 @@ class Datum{
         void unsetValues();
 
         virtual QString getTypeName() const = 0;
+        /*virtual*/ qint32 getFieldCount() const;// = 0;
         virtual QString getFieldName(int index) const = 0;
         virtual QVariant::Type getFieldType(int index) const = 0;
 
@@ -73,6 +76,7 @@ class Datum{
 
     private:
         qlonglong _rowId;
+        qint32 _fieldCount;
         QList<QVariant*> _valueList;
 };
 

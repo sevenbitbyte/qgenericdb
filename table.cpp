@@ -9,6 +9,7 @@ Table::Table(QString table, Datum *value, Database *parent) :
 	_tableName = table;
 	_exampleDatum = value;
 	_database = parent;
+
 	//TODO: setup _db
 
 	Q_ASSERT(isValid());

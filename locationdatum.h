@@ -10,6 +10,7 @@ class LocationDatum : public Datum
         //LocationDatum(Datum* parent);
 
         virtual QString getTypeName() const;
+        //virtual qint32 getFieldCount() const;
         virtual QString getFieldName(int index) const;
         virtual QVariant::Type getFieldType(int index) const;
 

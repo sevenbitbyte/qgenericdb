@@ -40,7 +40,7 @@ QString Database::lookupDBPath(QSettings* settings){
 	QString path = _dbconnectStr;
 
 	if(path.isEmpty()){
-		QString pathVar = _dbName.append("DbPath");
+        QString pathVar = QString(_dbName).append("DbPath");
 
         //Check for db path in application settings
 		if(settings->contains(pathVar)){
@@ -54,11 +54,11 @@ QString Database::lookupDBPath(QSettings* settings){
 
                 //Construct db path residing in same directory as app settings
                 QString settingsDir = settingsFile.canonicalPath();
-                path = settingsDir.append(_dbName).append(".sqlite");
+                path = QString(settingsDir).append(_dbName).append(".sqlite");
 
                 //Save db path to application settings
-                QString firstRunVar = pathVar.append("FirstRun");
-                settings->setValue(pathVar, QVariant::fromValue<QString>(settingsDir));
+                QString firstRunVar = QString(pathVar).append("FirstRun");
+                settings->setValue(pathVar, QVariant::fromValue<QString>(path));
                 settings->setValue(firstRunVar, QVariant::fromValue<bool>(false));
                 settings->sync();
 			}
@@ -69,7 +69,7 @@ QString Database::lookupDBPath(QSettings* settings){
         else{
             //Db path not defined in app settings
             //Set firstrun flag to true
-            QString firstRunVar = pathVar.append("FirstRun");
+            QString firstRunVar = QString(pathVar).append("FirstRun");
             settings->setValue(firstRunVar, QVariant::fromValue<bool>(true));
 			settings->sync();
 
@@ -78,10 +78,10 @@ QString Database::lookupDBPath(QSettings* settings){
 
             //Construct db path residing in same directory as app settings
 			QString settingsDir = settingsFile.canonicalPath();
-			path = settingsDir.append(_dbName).append(".sqlite");
+            path = QString(settingsDir).append("/").append(_dbName).append(".sqlite");
 
             //Save db path to application settings
-			settings->setValue(pathVar, QVariant::fromValue<QString>(settingsDir));
+            settings->setValue(pathVar, QVariant::fromValue<QString>(path));
             settings->setValue(firstRunVar, QVariant::fromValue<bool>(false));
 			settings->sync();
 		}
@@ -92,7 +92,7 @@ QString Database::lookupDBPath(QSettings* settings){
 
 
 bool Database::openDB(){
-	QString databaseHandle = _dbName.append("-datastore");
+    QString databaseHandle = _dbName;
 
     if(QSqlDatabase::contains(databaseHandle)){
         //Use existing db connection
@@ -207,29 +207,30 @@ bool Database::createTable(Datum* dataExample, QString tableName){
 
     queryStream << "CREATE TABLE IF NOT EXISTS " << tableName << "(";
 
-    QMap<QString,QVariant::Type> fieldTypeMap = dataExample->getFieldTypeMap();
-    QMap<QString,QVariant::Type>::Iterator fieldIter = fieldTypeMap.begin();
+    QList<QString> fieldList = dataExample->getFieldNames();
 
-    while(fieldIter != fieldTypeMap.end()){
+    for(int i=0; i < fieldList.size(); i++){
+        QVariant::Type fieldType = dataExample->getFieldType(i);
 
-        queryStream << fieldIter.key() << " " << Database::variantToSqlType(fieldIter.value());
+        queryStream << fieldList[i] << " " << Database::variantToSqlType( fieldType );
 
-        if(fieldIter == fieldTypeMap.begin()){
+        if(i==0){
             //Make first field primary key
-            queryStream << "PRIMARY KEY";
+            queryStream << " PRIMARY KEY";
 
-            if(Database::variantToSqlType(fieldIter.value()) == "INTEGER"){
+            if(Database::variantToSqlType(fieldType) == "INTEGER" && fieldList[i].toLower() == "id"){
                 queryStream << " AUTOINCREMENT";
             }
         }
 
-        fieldIter++;
-        if(fieldIter != fieldTypeMap.end()){
-            queryStream << ",";
+        if(i != fieldList.size() - 1){
+            queryStream << ", ";
         }
     }
 
     queryStream << ")";
+
+    qDebug() << "Creating table using " << queryStr;
 
     QSqlQuery query(_db);
     return doQuery(query, queryStr);

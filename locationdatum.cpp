@@ -5,6 +5,7 @@
 
 LocationDatum::LocationDatum()
 {
+    unsetValues();
 }
 
 /*LocationDatum::LocationDatum(Datum *parent){
@@ -14,6 +15,10 @@ LocationDatum::LocationDatum()
 QString LocationDatum::getTypeName() const {
     return "LocationDatum";
 }
+
+/*qint32 LocationDatum::getFieldCount() const {
+    return 11;
+}*/
 
 QString LocationDatum::getFieldName(int index) const {
     switch(index){
