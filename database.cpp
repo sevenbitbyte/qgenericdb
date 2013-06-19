@@ -146,6 +146,10 @@ bool Database::doQuery(QSqlQuery& query, QString queryString){
 	return success;
 }
 
+QSqlDatabase* Database::getDb() {
+    return &_db;
+}
+
 Table* Database::getTable(Datum* dataExample, QString tableName){
     if(tableName.isEmpty()){
         tableName = dataExample->getTypeName();
@@ -214,14 +218,6 @@ bool Database::createTable(Datum* dataExample, QString tableName){
 
         queryStream << fieldList[i] << " " << Database::variantToSqlType( fieldType );
 
-        if(i==0){
-            //Make first field primary key
-            queryStream << " PRIMARY KEY";
-
-            if(Database::variantToSqlType(fieldType) == "INTEGER" && fieldList[i].toLower() == "id"){
-                queryStream << " AUTOINCREMENT";
-            }
-        }
 
         if(i != fieldList.size() - 1){
             queryStream << ", ";

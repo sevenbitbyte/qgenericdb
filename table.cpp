@@ -4,13 +4,14 @@
 #include <QHostInfo>
 
 Table::Table(QString table, Datum *value, Database *parent) :
-	QObject((QObject*)parent)
+    QObject((QObject*)parent)
 {
 	_tableName = table;
 	_exampleDatum = value;
 	_database = parent;
 
 	//TODO: setup _db
+    _db = QSqlDatabase::database(_database->getDBName());
 
 	Q_ASSERT(isValid());
 }
@@ -107,7 +108,7 @@ QMap<QString,QVariant::Type> Table::getColumnTypeMap()  {
     QMap<QString, QVariant::Type> nameTypeMap;
 
     QString queryString = QString("PRAGMA table_info(%1)").arg(getTableName());
-	QSqlQuery query(_db);
+    QSqlQuery query(_db);
 
 	if(doQuery(query, queryString)){
 		/*Note: Available Fields {cid, name, type, notnull, dflt_value, pk}*/
@@ -149,30 +150,106 @@ bool Table::doQuery(QSqlQuery& query, QString queryString){
     return success;
 }
 
-template<typename DatumType>  QList<Datum*> Table::selectDataSync(QString queryStr){
+QList<Datum*> Table::selectDataSync(QList<int> fields, QList<int> matchOn, Datum* lower, Datum* upper){
+    QString queryString;
+    QTextStream queryStream(&queryString);
+
+    queryStream << "SELECT rowid,";
+
+    if(fields.isEmpty()){
+        //Select all fields
+        queryStream << " * ";
+    }
+    else{
+        //Select specified fields
+        QList<QString> fieldNames = _exampleDatum->getFieldNames();
+        for(int i=0; i<fields.size(); i++){
+            queryStream << fieldNames[ fields[i] ];
+
+            if(i < fields.size()-1){
+                queryStream << ", ";
+            }
+        }
+    }
+
+    queryStream << " FROM " << getTableName();
+
+    /*
+    if(!matchOn.isEmpty() && (lower!=NULL && upper!=NULL )){
+        //Loop over every match field
+
+        queryStream << " WHERE ";
+
+        QList<QString> fieldNames = _exampleDatum->getFieldNames();
+        for(int i=0; i<matchOn.size(); i++){
+            int fieldIdx = matchOn[i];
+            QVariant* lowerVal = NULL;
+            QVariant* upperVal = NULL;
+
+            if(lower != NULL){
+                lowerVal = lower->getValue(fieldIdx);
+            }
+
+            if(upper != NULL){
+                upperVal = upper->getValue(fieldIdx);
+            }
+
+            //queryStream << fieldNames[ fieldIdx ]
+
+            if(lowerVal != NULL && upperVal != NULL){
+                queryStream << "BETWEEN " << fieldNames[fieldIdx] << ">" << lowerVal
+                            << " AND " << fieldNames[fieldIdx] << ">" << upperVal;
+            }
+        }
+    }*/
+
+    return selectDataSync(queryString);
+}
+
+QList<Datum*> Table::selectDataSync(QString queryStr){
     QList<Datum*> resultList;
     QSqlQuery query(_db);
 
 
-
     if( doQuery(query, queryStr) ){
-        while( query.next() ){
-            QSqlRecord record = query.record();
+        QList<QString> fieldNames = _exampleDatum->getFieldNames();
+        QMap<int,int> fieldIndex;
+        int rowIdxIndex = -1;
 
-            Datum* datum = new DatumType();
+        //Build fieldIndex list
+        QSqlRecord rec = query.record();
 
-            //Copy field values
-            for(int i=0; i<datum->getFieldCount(); i++){
-                int fieldIdx = datum->getFieldName(i);
+        for(int i=0; i<rec.count(); i++){
+            QString sqlFieldName = rec.fieldName(i);
 
-                datum->setValue(i, record.value(fieldIdx));
+            if(sqlFieldName.toLower().startsWith("rowid")){
+                rowIdxIndex = i;
+                continue;
             }
 
-            //Get rowId field's index
-            int rowIdIdx = record.indexOf("rowid");
-            Q_ASSERT(rowIdIdx > -1);
-            //Set datum rowId
-            datum->setId(record.value(rowIdIdx).LongLong());
+            int datumFieldIdx = fieldNames.indexOf(sqlFieldName);
+
+            fieldIndex.insert(i,datumFieldIdx);
+        }
+
+        //Read returned rows
+        while( query.next() ){
+            Datum* datum = _exampleDatum->alloc();
+
+            //Copy each SQL field value
+            for(int i=0; i<fieldIndex.size(); i++){
+
+                int sqlIdx = fieldIndex.keys()[i];
+                int datumIdx = fieldIndex.values()[i];
+
+                datum->setValue(datumIdx, new QVariant(query.value(sqlIdx)));
+            }
+
+            if(rowIdxIndex != -1){
+                datum->setId( query.value(rowIdxIndex).toLongLong() );
+            }
+
+            resultList.append(datum);
         }
     }
 
@@ -186,7 +263,7 @@ QString Table::getTableName() const {
 }
 
 void Table::insertData(QList<Datum*> data, QList<int> fields){
-    bool success = insertDataSync( data, fields);
+    bool success = insertDataSync( data, fields );
     Q_ASSERT(success);
 }
 
@@ -198,30 +275,33 @@ bool Table::insertDataSync(QList<Datum*> data, QList<int> fields){
 
     stringStream << "INSERT INTO " << _tableName;
 
-    if(!fields.isEmpty()){
-         stringStream << "(";
-
-        //Build list of affected columns
-        for(int i=0; i<fields.size(); i++){
-            stringStream << _exampleDatum->getFieldName(i);
-
-            if(i < fields.size() - 1){
-                stringStream << ", ";
-            }
+    if(fields.empty()){
+        //Build list of all datum field indexes
+        for(int i=0; i<_exampleDatum->getFieldCount(); i++){
+            fields.push_back(i);
         }
-
-        stringStream << ")";
     }
 
-    stringStream << " VALUES (";
 
-    for(int i=0; i<data.size(); i++){
-        stringStream << "?";
-        if(i < data.size() - 1){
+    //Build list of affected columns
+    stringStream << "(";
+    for(int i=0; i<fields.size(); i++){
+        stringStream << _exampleDatum->getFieldName(i);
+
+        if(i < fields.size() - 1){
             stringStream << ", ";
         }
     }
+    stringStream << ")";
 
+    //Insert place holders for field values
+    stringStream << " VALUES (";
+    for(int i=0; i<fields.size(); i++){
+        stringStream << "?";
+        if(i < fields.size() - 1){
+            stringStream << ", ";
+        }
+    }
     stringStream << ")";
     query.prepare(queryString);
 

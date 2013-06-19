@@ -8,19 +8,10 @@
 class Datum{
 	public:
 
+        /**
+         * @brief Construct blank Datum
+         */
         Datum();
-
-        /**
-         * @brief Construct a Datum with default values. Expects all fields to be supplied
-         * @param defaultValues
-         */
-        //Datum(QList<QVariant> defaultValues=QList<QVariant>());
-
-        /**
-         * @brief Construct a Datum with the specified intial values
-         * @param initialValues
-         */
-        //Datum(QMap<QString,QVariant> initialValues);
 
 
 		/**
@@ -29,6 +20,7 @@ class Datum{
          */
         QMap<QString,QVariant::Type> getFieldTypeMap() const;
 
+        qint32 getFieldCount();
         QList<QVariant*> getValues() const;
         QList<QString> getFieldNames() const;
 
@@ -62,8 +54,14 @@ class Datum{
          */
         void unsetValues();
 
+        /**
+         * @brief   Initializes all fields to the default value for a QVariant
+         *          of the appropriate type
+         */
+        void initValues();
+
+        virtual Datum* alloc() = 0;
         virtual QString getTypeName() const = 0;
-        /*virtual*/ qint32 getFieldCount() const;// = 0;
         virtual QString getFieldName(int index) const = 0;
         virtual QVariant::Type getFieldType(int index) const = 0;
 
@@ -137,10 +135,15 @@ class Database : public QObject{
     signals:
         void databaseOpened(QString dbName, QString dbPath);
 
+
+
     protected:
         bool openDB();
         QString lookupDBPath(QSettings* settings);
         bool doQuery(QSqlQuery& query, QString queryString);
+
+        friend class Table;
+        QSqlDatabase* getDb();
 
     private:
         QString _dbName;
@@ -166,7 +169,8 @@ class Table : public QObject{
         bool isValid();
 
 
-        template<typename DatumType> QList<Datum*> selectDataSync(QString query);
+        QList<Datum*> selectDataSync(QList<int> fields=QList<int>(), QList<int> matchOn=QList<int>(), Datum* lower=NULL, Datum* upper=NULL);
+        QList<Datum*> selectDataSync(QString query);
 
         bool insertDataSync(QList<Datum*> data, QList<int> fields=QList<int>());
         bool updateDataSync(QList<Datum*> data, QList<int> fields=QList<int>(), QList<int> matchOn=QList<int>());
@@ -174,8 +178,6 @@ class Table : public QObject{
         QString getTableName() const;
         QMap<QString,QVariant::Type> getColumnTypeMap();
 
-    signals:
-        void selectedData(QList<Datum*> data);
 
     public slots:
         //void selectData(QString query);

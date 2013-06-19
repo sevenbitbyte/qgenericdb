@@ -5,25 +5,22 @@
 
 LocationDatum::LocationDatum()
 {
-    unsetValues();
+    initValues();
 }
 
-/*LocationDatum::LocationDatum(Datum *parent){
-    _datum = parent;
-}*/
+Datum* LocationDatum::alloc(){
+    return new LocationDatum();
+}
 
 QString LocationDatum::getTypeName() const {
     return "LocationDatum";
 }
 
-/*qint32 LocationDatum::getFieldCount() const {
-    return 11;
-}*/
 
 QString LocationDatum::getFieldName(int index) const {
     switch(index){
-        case Id_Pos:
-            return QString("id");
+        /*case Id_Pos:
+            return QString("id");*/
         case DeviceId_Pos:
             return QString("device_id");
         case Timestamp_Pos:
@@ -54,7 +51,7 @@ QString LocationDatum::getFieldName(int index) const {
 
 QVariant::Type LocationDatum::getFieldType(int index) const {
     switch(index){
-        case Id_Pos:
+        //case Id_Pos:
         case DeviceId_Pos:
         case Timestamp_Pos:
         case Source_Pos:
@@ -109,7 +106,7 @@ LocationDatum::TrackSource LocationDatum::source() const {
 void LocationDatum::setSource(TrackSource source){
     QVariant* sourceVariant = new QVariant( (qlonglong) source);
 
-    setValue( (int) DeviceId_Pos, sourceVariant);
+    setValue( (int) Source_Pos, sourceVariant);
 }
 
 double LocationDatum::latitude() const {

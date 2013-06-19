@@ -32,6 +32,41 @@ int main(int argc, char *argv[])
         qWarning() << "Table[" <<  exampleLoc.getTypeName() << "] already exist";
     }
 
+    Table* locationTable = db.getTable(&exampleLoc);
+
+    if(locationTable == NULL){
+        qCritical() << "Got null reference to location table";
+    }
+
+    QList<Datum*> positions;
+
+    exampleLoc.setSource(LocationDatum::Source_Gps);
+    exampleLoc.setHdop(3.0f);
+
+    positions.append(&exampleLoc);
+    positions.append(&exampleLoc);
+    positions.append(&exampleLoc);
+
+    locationTable->insertDataSync(positions);
+    
+    QList<Datum*> data = locationTable->selectDataSync();
+
+    for(int i=0; i<data.size(); i++){
+        Datum* datum = data[i];
+
+        QString output;
+        QTextStream outStream(&output);
+
+        outStream << datum->id() << ": ";
+
+        for(int j=0; j<datum->getFieldCount(); j++){
+            outStream  << datum->getFieldName(j) << "=" << datum->getValue(j)->toString() << " ";
+        }
+
+        qDebug() << output;
+    }
+
+
     return 0;
 	
     //return a.exec();

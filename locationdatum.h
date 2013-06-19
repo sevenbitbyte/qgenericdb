@@ -7,25 +7,24 @@ class LocationDatum : public Datum
 {
     public:
         LocationDatum();
-        //LocationDatum(Datum* parent);
 
+        virtual Datum* alloc();
         virtual QString getTypeName() const;
-        //virtual qint32 getFieldCount() const;
         virtual QString getFieldName(int index) const;
         virtual QVariant::Type getFieldType(int index) const;
 
 
-        enum FieldPos{  Id_Pos=0,
+        enum FieldPos{  //Id_Pos=0,
+                        Timestamp_Pos=0,
                         DeviceId_Pos=1,
-                        Timestamp_Pos=2,
-                        Source_Pos=3,
-                        Latitude_Pos=4,
-                        Longitude_Pos=5,
-                        Hdop_Pos=6,
-                        Elevation_Pos=7,
-                        Course_Pos=8,
-                        Speed_Pos=9,
-                        Satelites_Pos=10  };
+                        Source_Pos=2,
+                        Latitude_Pos=3,
+                        Longitude_Pos=4,
+                        Hdop_Pos=5,
+                        Elevation_Pos=6,
+                        Course_Pos=7,
+                        Speed_Pos=8,
+                        Satelites_Pos=9  };
 
 
         int deviceId() const;
@@ -59,8 +58,6 @@ class LocationDatum : public Datum
         int satelites() const;
         void setSatelites(int satelites);
 
-    private:
-        //Datum* _datum;
 };
 
 #endif // LOCATIONDATUM_H

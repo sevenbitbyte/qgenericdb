@@ -4,30 +4,9 @@
 Datum::Datum(){
     //Do nothing
     _rowId = -1;
+    _fieldCount = -1;
 }
 
-/*Datum::Datum(QList<QVariant> defaultValues){
-    unsetValues();
-    _rowId = -1;
-
-    for(int i=0; i<defaultValues.size(); i++){
-        _valueList.push_back( new QVariant(defaultValues.at(i)) );
-    }
-}
-
-
-Datum::Datum(QMap<QString, QVariant> initialValues){
-    unsetValues();
-    _rowId = -1;
-    QList<QString> fieldNames = getFieldNames();
-
-    QMap<QString,QVariant>::iterator iter;
-    for(iter = initialValues.begin(); iter != initialValues.end(); iter++){
-        int idx = fieldNames.indexOf( iter.key() );
-
-        setValue(idx, iter.value());
-    }
-}*/
 
 QMap<QString,QVariant::Type> Datum::getFieldTypeMap() const {
     QMap<QString, QVariant::Type> fieldMap;
@@ -40,7 +19,11 @@ QMap<QString,QVariant::Type> Datum::getFieldTypeMap() const {
     return fieldMap;
 }
 
-qint32 Datum::getFieldCount() const {
+qint32 Datum::getFieldCount() {
+    if(_fieldCount == -1){
+        _fieldCount = getFieldNames().size();
+    }
+
     return _fieldCount;
 }
 
@@ -108,8 +91,6 @@ void Datum::unsetValue(int index){
 void Datum::unsetValues(){
     QList<QVariant::Type> types = getFieldTypeMap().values();
 
-    _fieldCount = types.size();
-
     for(int i=0; i<types.size(); i++){
         if(_valueList.size() < (i+1)){
             _valueList.push_back(NULL);
@@ -117,6 +98,22 @@ void Datum::unsetValues(){
         else if(_valueList.at(i) != NULL){
             delete _valueList.first();
             _valueList.replace(i, NULL);
+        }
+    }
+}
+
+void Datum::initValues(){
+    QList<QVariant::Type> types = getFieldTypeMap().values();
+
+    for(int i=0; i<types.size(); i++){
+        QVariant* value = new QVariant(types[i]);
+
+        if(_valueList.size() < (i+1)){
+            _valueList.push_back(value);
+        }
+        else if(_valueList.at(i) != NULL){
+            delete _valueList.first();
+            _valueList.replace(i, value);
         }
     }
 }
