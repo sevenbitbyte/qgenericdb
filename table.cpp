@@ -350,7 +350,7 @@ bool Table::updateDataSync(QList<Datum*> data, QList<int> fields, QList<int> mat
         }
     }
 
-    stringStream << " WHERE ";
+    stringStream << " WHERE (";
     if(matchOn.isEmpty()){
         //Match on rowId
         stringStream << "rowid = ?";

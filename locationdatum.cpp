@@ -128,9 +128,9 @@ double LocationDatum::longitude() const{
 }
 
 void LocationDatum::setLongitude(double value) {
-    QVariant* latVariant = new QVariant( value );
+    QVariant* longVariant = new QVariant( value );
 
-    setValue( (int) Latitude_Pos, latVariant);
+    setValue( (int) Longitude_Pos, longVariant);
 }
 
 double LocationDatum::hdop() const{
